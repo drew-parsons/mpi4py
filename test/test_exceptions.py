@@ -204,6 +204,113 @@ class TestExcGroup(BaseTestCase):
 
 # --------------------------------------------------------------------
 
+class TestExcSessionNull(BaseTestCase):
+
+    @unittest.skipMPI('openmpi')
+    def testGetNumPsets(self):
+        self.assertRaisesMPI(
+            [MPI.ERR_SESSION, MPI.ERR_ARG],
+            MPI.SESSION_NULL.Get_num_psets,
+        )
+
+    #@unittest.skipMPI('openmpi')
+    def testGetNthPset(self):
+        self.assertRaisesMPI(
+            [MPI.ERR_SESSION, MPI.ERR_ARG],
+            MPI.SESSION_NULL.Get_nth_pset,
+            0,
+        )
+
+    def testGetInfo(self):
+        self.assertRaisesMPI(
+            [MPI.ERR_SESSION, MPI.ERR_ARG],
+            MPI.SESSION_NULL.Get_info,
+        )
+
+    def testGetPsetInfo(self):
+        self.assertRaisesMPI(
+            [MPI.ERR_SESSION, MPI.ERR_ARG],
+            MPI.SESSION_NULL.Get_pset_info,
+            "mpi://SELF",
+        )
+
+    #@unittest.skipMPI('openmpi')
+    def testCreateGroup(self):
+        self.assertRaisesMPI(
+            [MPI.ERR_SESSION, MPI.ERR_ARG],
+            MPI.SESSION_NULL.Create_group,
+            "mpi://SELF",
+        )
+
+    #@unittest.skipMPI('openmpi')
+    def testGetErrhandler(self):
+        self.assertRaisesMPI(
+            [MPI.ERR_SESSION, MPI.ERR_ARG],
+            MPI.SESSION_NULL.Get_errhandler,
+        )
+
+    #@unittest.skipMPI('openmpi')
+    def testSetErrhandler(self):
+        self.assertRaisesMPI(
+            [MPI.ERR_SESSION, MPI.ERR_ARG],
+            MPI.SESSION_NULL.Set_errhandler,
+            MPI.ERRORS_RETURN,
+        )
+
+
+class TestExcSession(BaseTestCase):
+
+    def setUp(self):
+        super(TestExcSession, self).setUp()
+        self.SESSION = MPI.Session.Init()
+        self.SESSION.Set_errhandler(MPI.ERRORS_RETURN)
+
+    def tearDown(self):
+        self.SESSION.Finalize()
+        self.SESSION = None
+        super(TestExcSession, self).tearDown()
+
+    def testGetNthPsetNeg(self):
+        self.assertRaisesMPI(
+            MPI.ERR_ARG,
+            self.SESSION.Get_nth_pset,
+            -1,
+        )
+
+    @unittest.skipMPI('mpich(<4.1.0)')
+    @unittest.skipMPI('openmpi')
+    def testGetNthPsetPos(self):
+        self.assertRaisesMPI(
+            MPI.ERR_ARG,
+            self.SESSION.Get_nth_pset,
+            self.SESSION.Get_num_psets(),
+        )
+
+    #@unittest.skipMPI('openmpi')
+    def testGetPsetInfo(self):
+        self.assertRaisesMPI(
+            MPI.ERR_ARG,
+            self.SESSION.Get_pset_info,
+            "@qerty!#$",
+        )
+
+    #@unittest.skipMPI('openmpi')
+    def testCreateGroup(self):
+        self.assertRaisesMPI(
+            MPI.ERR_ARG,
+            self.SESSION.Create_group,
+            "@qerty!#$",
+        )
+
+
+try:
+    MPI.Session.Init().Finalize()
+except NotImplementedError:
+    unittest.disable(TestExcSessionNull, 'mpi-session')
+    unittest.disable(TestExcSession, 'mpi-session')
+
+# --------------------------------------------------------------------
+
 class TestExcCommNull(BaseTestCase):
 
     ERR_COMM = MPI.ERR_COMM
